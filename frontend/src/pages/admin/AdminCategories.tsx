@@ -1,0 +1,282 @@
+// Admin Categories Page - Copy từ templates/admin/categories.html
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  type: string;
+  created_at?: string;
+  transaction_count: number;
+}
+
+export default function AdminCategories() {
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      // TODO: Replace with actual admin API endpoint
+      const response = await fetch('http://localhost:5001/api/admin/categories', {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
+  const incomeCategories = categories.filter(c => c.type === 'income');
+  const expenseCategories = categories.filter(c => c.type === 'expense');
+
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="fw-bold text-dark">
+                <i className="fas fa-tags me-2"></i>
+                Quản lý Danh mục
+              </h2>
+              <p className="text-muted">Quản lý danh mục thu nhập và chi tiêu</p>
+            </div>
+            <button 
+              onClick={() => navigate('/admin/categories/add')}
+              className="btn btn-primary"
+            >
+              <i className="fas fa-plus me-2"></i>
+              Thêm danh mục
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Categories Overview */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <div className="card">
+            <div className="card-body text-center">
+              <div className="icon text-success mb-2">
+                <i className="fas fa-arrow-up fa-2x"></i>
+              </div>
+              <h4 className="text-success">{incomeCategories.length}</h4>
+              <p className="text-muted mb-0">Danh mục Thu nhập</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="col-md-6">
+          <div className="card">
+            <div className="card-body text-center">
+              <div className="icon text-danger mb-2">
+                <i className="fas fa-arrow-down fa-2x"></i>
+              </div>
+              <h4 className="text-danger">{expenseCategories.length}</h4>
+              <p className="text-muted mb-0">Danh mục Chi tiêu</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Income Categories */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header bg-success text-white">
+              <h5 className="mb-0">
+                <i className="fas fa-arrow-up me-2"></i>
+                Danh mục Thu nhập ({incomeCategories.length})
+              </h5>
+            </div>
+            <div className="card-body">
+              {incomeCategories.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>Tên danh mục</th>
+                        <th>Mô tả</th>
+                        <th>Số giao dịch</th>
+                        <th>Ngày tạo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {incomeCategories.map(category => (
+                        <tr key={category.id}>
+                          <td>{category.id}</td>
+                          <td>
+                            <strong className="text-success">{category.name}</strong>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              {category.description || '-'}
+                            </small>
+                          </td>
+                          <td>
+                            <span className="badge bg-info">
+                              {category.transaction_count} giao dịch
+                            </span>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              {formatDate(category.created_at)}
+                            </small>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <i className="fas fa-arrow-up fa-3x text-muted mb-3"></i>
+                  <h6 className="text-muted">Chưa có danh mục thu nhập</h6>
+                  <p className="text-muted">Thêm danh mục thu nhập để bắt đầu phân loại giao dịch.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Expense Categories */}
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header bg-danger text-white">
+              <h5 className="mb-0">
+                <i className="fas fa-arrow-down me-2"></i>
+                Danh mục Chi tiêu ({expenseCategories.length})
+              </h5>
+            </div>
+            <div className="card-body">
+              {expenseCategories.length > 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead className="table-light">
+                      <tr>
+                        <th>ID</th>
+                        <th>Tên danh mục</th>
+                        <th>Mô tả</th>
+                        <th>Số giao dịch</th>
+                        <th>Ngày tạo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenseCategories.map(category => (
+                        <tr key={category.id}>
+                          <td>{category.id}</td>
+                          <td>
+                            <strong className="text-danger">{category.name}</strong>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              {category.description || '-'}
+                            </small>
+                          </td>
+                          <td>
+                            <span className="badge bg-info">
+                              {category.transaction_count} giao dịch
+                            </span>
+                          </td>
+                          <td>
+                            <small className="text-muted">
+                              {formatDate(category.created_at)}
+                            </small>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <i className="fas fa-arrow-down fa-3x text-muted mb-3"></i>
+                  <h6 className="text-muted">Chưa có danh mục chi tiêu</h6>
+                  <p className="text-muted">Thêm danh mục chi tiêu để bắt đầu phân loại giao dịch.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Usage Guidelines */}
+      <div className="row mt-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h6 className="mb-0">
+                <i className="fas fa-info-circle me-2"></i>
+                Hướng dẫn sử dụng
+              </h6>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-6">
+                  <h6 className="text-success">
+                    <i className="fas fa-arrow-up me-1"></i>
+                    Danh mục Thu nhập
+                  </h6>
+                  <ul className="list-unstyled">
+                    <li><i className="fas fa-check text-success me-2"></i>Lương, thưởng</li>
+                    <li><i className="fas fa-check text-success me-2"></i>Đầu tư, lãi suất</li>
+                    <li><i className="fas fa-check text-success me-2"></i>Bán hàng, dịch vụ</li>
+                    <li><i className="fas fa-check text-success me-2"></i>Thu nhập khác</li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <h6 className="text-danger">
+                    <i className="fas fa-arrow-down me-1"></i>
+                    Danh mục Chi tiêu
+                  </h6>
+                  <ul className="list-unstyled">
+                    <li><i className="fas fa-check text-danger me-2"></i>Ăn uống, sinh hoạt</li>
+                    <li><i className="fas fa-check text-danger me-2"></i>Giao thông, xăng xe</li>
+                    <li><i className="fas fa-check text-danger me-2"></i>Giải trí, mua sắm</li>
+                    <li><i className="fas fa-check text-danger me-2"></i>Y tế, giáo dục</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="alert alert-info mt-3 mb-0">
+                <i className="fas fa-lightbulb me-2"></i>
+                <strong>Lưu ý:</strong> Chỉ có thể xóa danh mục chưa có giao dịch nào. 
+                Danh mục đã có giao dịch chỉ có thể chỉnh sửa tên và mô tả.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
